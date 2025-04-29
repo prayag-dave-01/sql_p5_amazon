@@ -2,8 +2,8 @@
 
 ## Project Overview
 
-**Project Title**: Amazon USA Sales Analysis
-**Level**: Advanced
+**Project Title**: Amazon USA Sales Analysis  
+**Level**: Advanced  
 **Database**: `amazon_db`
 
 ![Amazon_project](https://github.com/prayag-dave-01/sql_p5_amazon/blob/main/Amazon_2024.png?raw=true)
