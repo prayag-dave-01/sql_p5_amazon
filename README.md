@@ -1,12 +1,12 @@
----
+# Amazon USA Sales Analysis Project
 
-# **Amazon USA Sales Analysis Project**
+## Project Overview
 
-### **Difficulty Level: Advanced**
+**Project Title**: Amazon USA Sales Analysis
+**Level**: Advanced
+**Database**: `amazon_db`
 
----
-
-## **Project Overview**
+![Amazon_project](https://github.com/prayag-dave-01/sql_p5_amazon/blob/main/Amazon_2024.png?raw=true)
 
 I have worked on analyzing a dataset of over 20,000 sales records from an Amazon-like e-commerce platform. This project involves extensive querying of customer behavior, product performance, and sales trends using PostgreSQL. Through this project, I have tackled various SQL problems, including revenue analysis, customer segmentation, and inventory management.
 
@@ -16,7 +16,7 @@ An ERD diagram is included to visually represent the database schema and relatio
 
 ---
 
-![ERD Scratch](https://github.com/najirh/amazon_usa_project5/blob/main/erd2.png)
+![ERD Scratch](https://github.com/prayag-dave-01/sql_p5_amazon/blob/main/Amazon%20-%20ERD.png?raw=true)
 
 ## **Database Setup & Design**
 
@@ -175,7 +175,7 @@ products as p
 ON p.product_id = oi.product_id
 GROUP BY 1, 2
 ORDER BY 3 DESC
-LIMIT 10
+LIMIT 10;
 ```
 
 2. Revenue by Category
@@ -198,7 +198,7 @@ ON p.product_id = oi.product_id
 LEFT JOIN category as c
 ON c.category_id = p.category_id
 GROUP BY 1, 2
-ORDER BY 3 DESC
+ORDER BY 3 DESC;
 ```
 
 3. Average Order Value (AOV)
@@ -219,7 +219,7 @@ JOIN
 order_items as oi
 ON oi.order_id = o.order_id
 GROUP BY 1, 2
-HAVING  COUNT(o.order_id) > 5
+HAVING  COUNT(o.order_id) > 5;
 ```
 
 4. Monthly Sales Trend
@@ -247,7 +247,7 @@ ON oi.order_id = o.order_id
 WHERE o.order_date >= CURRENT_DATE - INTERVAL '1 year'
 GROUP BY 1, 2
 ORDER BY year, month
-) as t1
+) as t1;
 ```
 
 
@@ -256,14 +256,14 @@ Find customers who have registered but never placed an order.
 Challenge: List customer details and the time since their registration.
 
 ```sql
-Approach 1
+-- Approach 1
 SELECT *
 	-- reg_date - CURRENT_DATE
 FROM customers
-WHERE customer_id NOT IN (SELECT 
-					DISTINCT customer_id
-				FROM orders
-				);
+WHERE customer_id NOT IN (SELECT
+                               DISTINCT customer_id
+                               FROM orders
+                         );
 ```
 ```sql
 -- Approach 2
@@ -272,7 +272,7 @@ FROM customers as c
 LEFT JOIN
 orders as o
 ON o.customer_id = c.customer_id
-WHERE o.customer_id IS NULL
+WHERE o.customer_id IS NULL;
 ```
 
 6. Least-Selling Categories by State
@@ -306,20 +306,20 @@ GROUP BY 1, 2
 SELECT 
 *
 FROM ranking_table
-WHERE rank = 1
+WHERE rank = 1;
 ```
 
 
 7. Customer Lifetime Value (CLTV)
 Calculate the total value of orders placed by each customer over their lifetime.
-Challenge: Rank customers based on their CLTV.
+Challenge: Rank customers based on their CLTV. If ties don't skip next
 
 ```sql
 SELECT 
 	c.customer_id,
-	CONCAT(c.first_name, ' ',  c.last_name) as full_name,
-	SUM(total_sale) as CLTV,
-	DENSE_RANK() OVER( ORDER BY SUM(total_sale) DESC) as cx_ranking
+	CONCAT(c.first_name, ' ',  c.last_name) as customer_name,
+	ROUND(SUM(oi.total_sale::numeric), 2) as cltv,
+	DENSE_RANK() OVER( ORDER BY SUM(total_sale) DESC) as rank
 FROM orders as o
 JOIN 
 customers as c
@@ -327,7 +327,7 @@ ON c.customer_id = o.customer_id
 JOIN 
 order_items as oi
 ON oi.order_id = o.order_id
-GROUP BY 1, 2
+GROUP BY 1;
 ```
 
 
@@ -375,14 +375,14 @@ Challenge: Include breakdowns by payment status (e.g., failed, pending).
 
 ```sql
 SELECT 
-	p.payment_status,
-	COUNT(*) as total_cnt,
-	COUNT(*)::numeric/(SELECT COUNT(*) FROM payments)::numeric * 100
+     p.payment_status,
+     COUNT(*) as total_cnt,
+     COUNT(*)::numeric/(SELECT COUNT(*) FROM payments)::numeric * 100
 FROM orders as o
 JOIN
 payments as p
 ON o.order_id = p.order_id
-GROUP BY 1
+GROUP BY 1;
 ```
 
 11. Top Performing Sellers
@@ -434,7 +434,7 @@ SELECT
 	SUM(total_orders)::numeric * 100 as successful_orders_percentage
 	
 FROM sellers_reports
-GROUP BY 1, 2
+GROUP BY 1, 2;
 ```
 
 
@@ -443,25 +443,17 @@ Calculate the profit margin for each product (difference between price and cost 
 Challenge: Rank products by their profit margin, showing highest to lowest.
 */
 
-
 ```sql
 SELECT 
-	product_id,
-	product_name,
-	profit_margin,
-	DENSE_RANK() OVER( ORDER BY profit_margin DESC) as product_ranking
-FROM
-(SELECT 
 	p.product_id,
 	p.product_name,
-	-- SUM(total_sale - (p.cogs * oi.quantity)) as profit,
-	SUM(total_sale - (p.cogs * oi.quantity))/sum(total_sale) * 100 as profit_margin
+	SUM(total_sale - (p.cogs * oi.quantity))/sum(total_sale) * 100 as profit_margin,
+	DENSE_RANK() OVER(ORDER BY SUM(total_sale - (p.cogs * oi.quantity))/sum(total_sale) * 100 DESC) as product_ranking
 FROM order_items as oi
 JOIN 
 products as p
 ON oi.product_id = p.product_id
-GROUP BY 1, 2
-) as t1
+GROUP BY 1, 2;
 ```
 
 13. Most Returned Products
@@ -482,14 +474,56 @@ ON oi.product_id = p.product_id
 JOIN orders as o
 ON o.order_id = oi.order_id
 GROUP BY 1, 2
-ORDER BY 5 DESC
+ORDER BY 5 DESC;
 ```
 
-14. Inactive Sellers
+14. Orders Pending Shipment
+Find orders that have been paid but are still pending shipment.
+Challenge: Include order details, payment date, and customer information.
+
+```sql
+SELECT
+    o.*,
+    p.payment_date,
+    c.*
+FROM orders as o
+JOIN 
+    payments as p
+    ON o.order_id = p.order_id
+JOIN
+    customers as c
+    ON o.customer_id = c.customer_id
+WHERE 
+    p.payment_status = 'Payment Successed'
+    AND 
+    o.order_status = 'Inprogress';
+```
+
+15. Inactive Sellers
 Identify sellers who haven’t made any sales in the last 6 months.
 Challenge: Show the last sale date and total sales from those sellers.
 
 ```sql
+--Approach 1
+
+SELECT
+     s.seller_name,
+	 max(o.order_date) as last_sale_date,
+	 sum(oi.total_sale) as total_sales
+FROM sellers as s
+JOIN
+    orders as o
+    ON s.seller_id = o.seller_id
+JOIN
+    order_items as oi
+    ON o.order_id = oi.order_id
+WHERE 
+    s.seller_id not in (select seller_id from sellers where order_date >= CURRENT_DATE - INTERVAL '6 month')
+GROUP BY 1;
+```
+```sql
+--Approach 2
+
 WITH cte1 -- as these sellers has not done any sale in last 6 month
 AS
 (SELECT * FROM sellers
@@ -497,36 +531,36 @@ WHERE seller_id NOT IN (SELECT seller_id FROM orders WHERE order_date >= CURRENT
 )
 
 SELECT 
-o.seller_id,
+s.seller_name,
 MAX(o.order_date) as last_sale_date,
-MAX(oi.total_sale) as last_sale_amount
+SUM(oi.total_sale) as total_sales
 FROM orders as o
 JOIN 
 cte1
 ON cte1.seller_id = o.seller_id
 JOIN order_items as oi
 ON o.order_id = oi.order_id
-GROUP BY 1
+GROUP BY 1;
 ```
 
-
-15. IDENTITY customers into returning or new
+16. IDENTITY customers into returning or new
 if the customer has done more than 5 return categorize them as returning otherwise new
 Challenge: List customers id, name, total orders, total returns
 
 ```sql
-SELECT 
-c_full_name as customers,
-total_orders,
-total_return,
-CASE
-	WHEN total_return > 5 THEN 'Returning_customers' ELSE 'New'
-END as cx_category
+SELECT
+     customer_name,
+     total_orders,
+     total_returns,
+     CASE
+         WHEN total_returns > 5 THEN 'Returning_customers' ELSE 'New'
+END as customer_category
 FROM
-(SELECT 
-	CONCAT(c.first_name, ' ', c.last_name) as c_full_name,
-	COUNT(o.order_id) as total_orders,
-	SUM(CASE WHEN o.order_status = 'Returned' THEN 1 ELSE 0 END) as total_return	
+(
+SELECT 
+     CONCAT(c.first_name, ' ', c.last_name) as customer_name,
+     COUNT(o.order_id) as total_orders,
+     SUM(CASE WHEN o.order_status = 'Returned' THEN 1 ELSE 0 END) as total_returns
 FROM orders as o
 JOIN 
 customers as c
@@ -534,35 +568,93 @@ ON c.customer_id = o.customer_id
 JOIN
 order_items as oi
 ON oi.order_id = o.order_id
-GROUP BY 1)
+GROUP BY 1;
 ```
 
-
-16. Top 5 Customers by Orders in Each State
+17. Top 5 Customers by Orders in Each State
 Identify the top 5 customers with the highest number of orders for each state.
 Challenge: Include the number of orders and total sales for each customer.
 ```sql
-SELECT * FROM 
-(SELECT 
-	c.state,
-	CONCAT(c.first_name, ' ', c.last_name) as customers,
-	COUNT(o.order_id) as total_orders,
-	SUM(total_sale) as total_sale,
-	DENSE_RANK() OVER(PARTITION BY c.state ORDER BY COUNT(o.order_id) DESC) as rank
-FROM orders as o
+-- Approach 1 - Subquery
+
+SELECT 
+     DISTINCT c.customer_id,
+	 CONCAT(c.first_name, ' ', c.last_name) as customer_name,
+	 'Apple AirPods Pro' as product_purchased,
+	 'Apple AirPods Max' as suggested_product
+FROM customers as c
+JOIN 
+orders as o
+ON c.customer_id = o.customer_id
 JOIN 
 order_items as oi
-ON oi.order_id = o.order_id
+ON o.order_id = oi.order_id
 JOIN 
-customers as c
-ON 
-c.customer_id = o.customer_id
-GROUP BY 1, 2
-) as t1
-WHERE rank <=5
+products as p
+ON oi.product_id = p.product_id
+WHERE 
+p.product_name = 'Apple AirPods Pro'
+AND c.customer_id NOT IN (
+                           SELECT 
+                               DISTINCT c2.customer_id
+                               FROM customers as c2
+                               JOIN orders as o2
+                               ON c2.customer_id = o2.customer_id
+                               JOIN order_items as oi2
+                               ON o2.order_id = oi2.order_id
+                               JOIN products as p2
+                               ON oi2.product_id = p2.product_id
+							   WHERE p2.product_name = 'Apple AirPods Max'
+							);
+```
+```sql
+--Approach 2 - CTE
+
+WITH products_purchases AS
+(
+  SELECT 
+      c.customer_id,
+	  p.product_name
+  FROM customers as c
+  JOIN 
+  orders as o
+  ON c.customer_id = o.customer_id
+  JOIN 
+  order_items as oi
+  ON o.order_id = oi.order_id
+  JOIN 
+  products as p
+  ON oi.product_id = p.product_id
+),
+airpods_pro_customers AS
+(
+ SELECT DISTINCT customer_id
+ FROM products_purchases
+ WHERE product_name = 'Apple AirPods Pro'
+),
+airpods_max_customers AS
+(
+ SELECT DISTINCT customer_id
+ FROM products_purchases
+ WHERE product_name = 'Apple AirPods Max'
+)
+SELECT 
+     DISTINCT c.customer_id,
+	 CONCAT(c.first_name, ' ', c.last_name) as customer_name,
+	 'Apple AirPods Pro' as product_purchased,
+	 'Apple AirPods Max' as suggested_product
+FROM customers as c
+JOIN 
+airpods_pro_customers as apc
+ON c.customer_id = apc.customer_id
+WHERE 
+c.customer_id NOT IN (
+                       SELECT DISTINCT customer_id 
+				       FROM airpods_max_customers
+				     );  
 ```
 
-17. Revenue by Shipping Provider
+18. Revenue by Shipping Provider
 Calculate the total revenue handled by each shipping provider.
 Challenge: Include the total number of orders handled and the average delivery time for each provider.
 
@@ -583,7 +675,7 @@ s.order_id = o.order_id
 GROUP BY 1
 ```
 
-18. Top 10 product with highest decreasing revenue ratio compare to last year(2022) and current_year(2023)
+19. Top 10 product with highest decreasing revenue ratio compare to last year(2022) and current_year(2023)
 Challenge: Return product_id, product_name, category_name, 2022 revenue and 2023 revenue decrease ratio at end Round the result
 Note: Decrease ratio = cr-ls/ls* 100 (cs = current_year ls=last_year)
 
@@ -592,9 +684,9 @@ WITH last_year_sale
 as
 (
 SELECT 
-	p.product_id,
-	p.product_name,
-	SUM(oi.total_sale) as revenue
+     p.product_id,
+     p.product_name,
+     SUM(oi.total_sale) as revenue
 FROM orders as o
 JOIN 
 order_items as oi
@@ -637,19 +729,20 @@ JOIN
 current_year_sale as cs
 ON ls.product_id = cs.product_id
 WHERE 
-	ls.revenue > cs.revenue
+    ls.revenue > cs.revenue
 ORDER BY 5 DESC
-LIMIT 10
+LIMIT 10;
 ```
 
-
-19. Final Task: Stored Procedure
+20. FINAL TASK - Stored Procedure and TRIGGER
 Create a stored procedure that, when a product is sold, performs the following actions:
 Inserts a new sales record into the orders and order_items tables.
 Updates the inventory table to reduce the stock based on the product and quantity purchased.
 The procedure should ensure that the stock is adjusted immediately after recording the sale.
 
 ```SQL
+-- Stored Procedure
+
 CREATE OR REPLACE PROCEDURE add_sales
 (
 p_order_id INT,
@@ -713,16 +806,65 @@ END;
 $$
 ```
 
-
-
 **Testing Store Procedure**
 call add_sales
 (
 25005, 2, 5, 25004, 1, 14
 );
 
----
+```sql
+-- Trigger
 
+--pgsql
+CREATE OR REPLACE FUNCTION update_inventory_on_order()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Check stock availability
+    IF NEW.quantity > (SELECT stock FROM inventory WHERE order_id = NEW.order_id) THEN
+	
+        RAISE NOTICE 'Not enough stock for item_id %', NEW.item_id;
+    END IF;
+
+    -- Update inventory
+    UPDATE inventory
+    SET stock = stock - NEW.quantity
+    WHERE orderid = NEW.order_id;
+    RETURN NEW;
+	
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_inventory
+BEFORE INSERT ON order_items
+FOR EACH ROW
+EXECUTE FUNCTION update_inventory_on_order();
+
+
+-- plsql
+
+CREATE OR REPLACE TRIGGER trg_update_inventory
+BEFORE INSERT ON order_items
+FOR EACH ROW
+DECLARE
+    v_stock inventory.stock%TYPE;
+BEGIN
+    -- Fetch current stock
+    SELECT stock INTO v_stock
+    FROM inventory
+    WHERE item_id = :NEW.item_id;
+
+    -- Check if enough stock is available
+    IF :NEW.quantity > v_stock THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Not enough stock for item_id ' || :NEW.item_id);
+    END IF;
+
+    -- Update inventory stock
+    UPDATE inventory
+    SET stock = stock - :NEW.quantity
+    WHERE item_id = :NEW.item_id;
+END;
+/
+```
 ---
 
 ## **Learning Outcomes**
@@ -736,15 +878,13 @@ This project enabled me to:
 
 ---
 
-## **Conclusion**
+## Technology Stack
+- **Database**: PostgreSQL
+- **SQL Queries**: DDL, DML, Aggregations, Subqueries, Window Functions
+- **Tools**: pgAdmin 4 (used) (or any SQL editor), PostgreSQL (via Homebrew, Docker, or direct installation)
 
-This advanced SQL project successfully demonstrates my ability to solve real-world e-commerce problems using structured queries. From improving customer retention to optimizing inventory and logistics, the project provides valuable insights into operational challenges and solutions.
+## Conclusion
 
-By completing this project, I have gained a deeper understanding of how SQL can be used to tackle complex data problems and drive business decision-making.
+This project demonstrates the application of SQL skills in creating and managing a library management system. It includes database setup, data manipulation, and advanced querying, providing a solid foundation for data management and analysis. Queries include `GROUP BY`, `ORDER BY`, `HAVING`, `JOINS`, `CTE`, `CTAS`, `CRUD`, `STORED PROCEDURES`, `FUNCTION`, `TRIGGER`, WINDOW FUNCTIONS (`RANK`, `DENSE_RANK`, `ROW_NUMBER`, `LEAD`, `LAG`, `FIRST_VALUE`, `SUM`, `AVG`).
 
----
-
-### **Entity Relationship Diagram (ERD)**
-![ERD](https://github.com/najirh/amazon_usa_project5/blob/main/erd.png)
-
----
+## Author - Prayag Dave
