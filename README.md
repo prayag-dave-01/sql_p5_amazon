@@ -443,7 +443,6 @@ GROUP BY 1, 2;
 12. Product Profit Margin
 Calculate the profit margin for each product (difference between price and cost of goods sold).
 Challenge: Rank products by their profit margin, showing highest to lowest.
-*/
 
 ```sql
 SELECT 
@@ -736,7 +735,7 @@ ORDER BY 5 DESC
 LIMIT 10;
 ```
 
-20. FINAL TASK - Stored Procedure and TRIGGER
+20. FINAL TASK - Stored Procedure and TRIGGER  
 Create a stored procedure that, when a product is sold, performs the following actions:
 Inserts a new sales record into the orders and order_items tables.
 Updates the inventory table to reduce the stock based on the product and quantity purchased.
@@ -887,6 +886,13 @@ This project enabled me to:
 
 ## Conclusion
 
-This project demonstrates the application of SQL skills in creating and managing a library management system. It includes database setup, data manipulation, and advanced querying, providing a solid foundation for data management and analysis. Queries include `GROUP BY`, `ORDER BY`, `HAVING`, `JOINS`, `CTE`, `CTAS`, `CRUD`, `STORED PROCEDURES`, `FUNCTION`, `TRIGGER`, WINDOW FUNCTIONS (`RANK`, `DENSE_RANK`, `ROW_NUMBER`, `LEAD`, `LAG`, `FIRST_VALUE`, `SUM`, `AVG`).
+This advanced SQL project successfully demonstrates my ability to solve real-world e-commerce problems using structured queries. From improving customer retention to optimizing inventory and logistics, the project provides valuable insights into operational challenges and solutions. Queries include `GROUP BY`, `ORDER BY`, `HAVING`, `JOINS`, `CTE`, `STORED PROCEDURES`, `FUNCTION`, `TRIGGER`, `DENSE_RANK`, etc.
 
 ## Author - Prayag Dave
+
+This project is part of my portfolio, showcasing the SQL skills essential for data analyst roles. If you have any questions, feedback, or would like to collaborate, feel free to get in touch!
+
+- **LinkedIn**: [Connect with me professionally](https://www.linkedin.com/in/prayag-dave-56b3681b3)
+- **Mail**: prayagdavework@gmail.com
+
+Thank you for your support, and I look forward to connecting with you!
