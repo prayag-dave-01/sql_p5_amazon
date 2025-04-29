@@ -6,6 +6,8 @@
 **Level**: Advanced  
 **Database**: `amazon_db`
 
+---
+
 ![Amazon_project](https://github.com/prayag-dave-01/sql_p5_amazon/blob/main/Amazon_2024.png?raw=true)
 
 I have worked on analyzing a dataset of over 20,000 sales records from an Amazon-like e-commerce platform. This project involves extensive querying of customer behavior, product performance, and sales trends using PostgreSQL. Through this project, I have tackled various SQL problems, including revenue analysis, customer segmentation, and inventory management.
