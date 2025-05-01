@@ -249,18 +249,16 @@ Challenge: Display the sales trend, grouping by month, return current_month sale
 
 ```sql
 SELECT 
-	year,
-	month,
-	total_sale as current_month_sale,
-	LAG(total_sale, 1) OVER(ORDER BY year, month) as last_month_sale
+     year,
+     month,
+     total_sale as current_month_sale,
+     LAG(total_sale, 1) OVER(ORDER BY year, month) as last_month_sale
 FROM ---
 (
 SELECT 
-	EXTRACT(MONTH FROM o.order_date) as month,
-	EXTRACT(YEAR FROM o.order_date) as year,
-	ROUND(
-			SUM(oi.total_sale::numeric)
-			,2) as total_sale
+     EXTRACT(MONTH FROM o.order_date) as month,
+     EXTRACT(YEAR FROM o.order_date) as year,
+     ROUND(SUM(oi.total_sale::numeric), 2) as total_sale
 FROM orders as o
 JOIN
 order_items as oi
@@ -271,7 +269,6 @@ ORDER BY year, month
 ) as t1;
 ```
 
-
 Task 5. Customers with No Purchases
 Find customers who have registered but never placed an order.
 Challenge: List customer details and the time since their registration.
@@ -279,12 +276,12 @@ Challenge: List customer details and the time since their registration.
 ```sql
 -- Approach 1
 SELECT *
-	-- reg_date - CURRENT_DATE
 FROM customers
-WHERE customer_id NOT IN (SELECT
-                               DISTINCT customer_id
-                               FROM orders
-                         );
+WHERE
+    customer_id NOT IN (SELECT
+                        DISTINCT customer_id
+                        FROM orders
+                       );
 ```
 ```sql
 -- Approach 2
@@ -305,10 +302,10 @@ WITH ranking_table
 AS
 (
 SELECT 
-	c.state,
-	cat.category_name,
-	SUM(oi.total_sale) as total_sale,
-	RANK() OVER(PARTITION BY c.state ORDER BY SUM(oi.total_sale) ASC) as rank
+     c.state,
+     cat.category_name,
+     SUM(oi.total_sale) as total_sale,
+     RANK() OVER(PARTITION BY c.state ORDER BY SUM(oi.total_sale) ASC) as rank
 FROM orders as o
 JOIN 
 customers as c
@@ -336,10 +333,10 @@ Challenge: Rank customers based on their CLTV. If ties don't skip next
 
 ```sql
 SELECT 
-	c.customer_id,
-	CONCAT(c.first_name, ' ',  c.last_name) as customer_name,
-	ROUND(SUM(oi.total_sale::numeric), 2) as cltv,
-	DENSE_RANK() OVER( ORDER BY SUM(total_sale) DESC) as rank
+     c.customer_id,
+     CONCAT(c.first_name, ' ',  c.last_name) as customer_name,
+     ROUND(SUM(oi.total_sale::numeric), 2) as cltv,
+     DENSE_RANK() OVER( ORDER BY SUM(total_sale) DESC) as rank
 FROM orders as o
 JOIN 
 customers as c
