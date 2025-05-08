@@ -1077,8 +1077,8 @@ FROM orders;
 Task 15. **Count Function**: Count the total number of unique customers in the `customers` table.
 
 ```sql
-SELECT 
-DISTINCT COUNT(customer_id) 
+SELECT
+COUNT(DISTINCT customer_id) 
 FROM customers;
 ```
 
